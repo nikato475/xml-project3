@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Display and Transform XML</title>
+  <script type="text/javascript">
+    async function transformXML() {
+      var remoteXmlURL = "https://raw.githubusercontent.com/nikato475/xml-project3/refs/heads/main/Outcome%203%20xml.txt";
+      var xslURL = "https://raw.githubusercontent.com/nikato475/xml-project3/refs/heads/main/style.xsl";
+
+      try {
+        let xmlResponse = await fetch(remoteXmlURL);
+        if (!xmlResponse.ok) {
+           throw new Error('Failed to fetch remote XML');
+        }
+        
+        const xmlText = await xmlResponse.text();
+        const parser = new DOMParser();
+        const xmlDoc = parser.parseFromString(xmlText, "text/xml");
+
+        if (xmlDoc.getElementsByTagName('parsererror').length > 0) {
+            throw new Error('XML parsing failed');
+        }
+
+        const xslResponse = await fetch(xslURL);
+        if (!xslResponse.ok) {
+           throw new Error('Failed to fetch remote XSL');
+        }
+        const xslText = await xslResponse.text();
+        const xslDoc = parser.parseFromString(xslText, "text/xml");
+
+        if (window.ActiveXObject || "ActiveXObject" in window) {
+          var result = xmlDoc.transformNode(xslDoc);
+          document.getElementById("output").innerHTML = result;
+        } else {
+          const processor = new XSLTProcessor();
+          processor.importStylesheet(xslDoc);
+          const fragment = processor.transformToFragment(xmlDoc, document);
+          document.getElementById("output").appendChild(fragment);
+        }
+      } catch (err) {
+        document.getElementById("output").innerHTML = "<p style='color:red;'>Error: " + err.message + "</p>";
+      }
+    }
+  </script>
+</head>
+<body onload="transformXML()">
+  <div id="output">Loading and transforming...</div>
+</body>
+</html>
